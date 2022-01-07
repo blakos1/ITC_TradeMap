@@ -1,3 +1,4 @@
+{
 library(RSelenium)
 library(wdman)
 library(stringr)
@@ -5,7 +6,7 @@ library(stringr)
 library(devtools)
 library(pkgbuild)
 stopifnot(find_rtools())
-
+}
 # requirements:
 #   java with PATH set up
 #   firefox
@@ -25,14 +26,13 @@ firefox_location = "C:/Users/U576750/AppData/Local/Mozilla Firefox/firefox.exe"
 
 
 #script --------------------
-download_path = paste0(getwd(), "/download_directory") %>%
-  str_replace_all("/", "\\\\\\\\")
+download_path = paste0(getwd(), "/download_directory") #%>%
+  #str_replace_all("/", "//")
 
 fprof = makeFirefoxProfile(list(browser.download.dir = download_path,
-                                "browser.download.folderList" = 2L,
-                                "browsder.download.manager.showWhenStarting" = FALSE,
-                                "browser.helperApps.neverAsk.saveToDisk" = "multipart/x-zip,application/zip,application/x-zip-compressed,application/x-compressed,application/msword,application/csv,text/csv,image/png ,image/jpeg, application/pdf, text/html,text/plain,  application/excel, application/vnd.ms-excel, application/x-excel, application/x-msexcel, application/octet-stream"
-                                ,"browser.helperApps.neverAsk.openFile" = "multipart/x-zip,application/zip,application/x-zip-compressed,application/x-compressed,application/msword,application/csv,text/csv,image/png ,image/jpeg, application/pdf, text/html,text/plain,  application/excel, application/vnd.ms-excel, application/x-excel, application/x-msexcel, application/octet-stream"
+                                browser.download.folderList = "2",
+                                browser.download.manager.showWhenStarting = FALSE,
+                                browser.helperApps.neverAsk.saveToDisk = "multipart/x-zip,application/zip,application/x-zip-compressed,application/x-compressed,application/msword,application/csv,text/csv,image/png ,image/jpeg, application/pdf, text/html,text/plain,  application/excel, application/vnd.ms-excel, application/x-excel, application/x-msexcel, application/octet-stream"
                                 )
                            )
 
