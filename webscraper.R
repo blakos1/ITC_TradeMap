@@ -2,6 +2,10 @@ library(RSelenium)
 library(wdman)
 library(stringr)
 
+library(devtools)
+library(pkgbuild)
+stopifnot(find_rtools())
+
 # requirements:
 #   java with PATH set up
 #   firefox
@@ -11,6 +15,7 @@ library(stringr)
 
 
 #passwords and locations --------------------
+{
 pwtable = read.csv("password.csv", header = FALSE)
 username = as.character(pwtable[1])
 password = as.character(pwtable[2])
@@ -20,9 +25,21 @@ firefox_location = "C:/Users/U576750/AppData/Local/Mozilla Firefox/firefox.exe"
 
 
 #script --------------------
+download_path = paste0(getwd(), "/download_directory") %>%
+  str_replace_all("/", "\\\\\\\\")
+
+fprof = makeFirefoxProfile(list(browser.download.dir = download_path,
+                                "browser.download.folderList" = 2L,
+                                "browsder.download.manager.showWhenStarting" = FALSE,
+                                "browser.helperApps.neverAsk.saveToDisk" = "multipart/x-zip,application/zip,application/x-zip-compressed,application/x-compressed,application/msword,application/csv,text/csv,image/png ,image/jpeg, application/pdf, text/html,text/plain,  application/excel, application/vnd.ms-excel, application/x-excel, application/x-msexcel, application/octet-stream"
+                                ,"browser.helperApps.neverAsk.openFile" = "multipart/x-zip,application/zip,application/x-zip-compressed,application/x-compressed,application/msword,application/csv,text/csv,image/png ,image/jpeg, application/pdf, text/html,text/plain,  application/excel, application/vnd.ms-excel, application/x-excel, application/x-msexcel, application/octet-stream"
+                                )
+                           )
+
 rD = rsDriver(browser = "firefox",
               verbose = FALSE,
               extraCapabilities = list(
+                fprof,
                 acceptInsecureCerts = TRUE,
                 acceptUntrustedCerts = TRUE,
                 "moz:firefoxOptions" = list(
@@ -32,7 +49,8 @@ rD = rsDriver(browser = "firefox",
               )
 remDr = rD$client
 #remDr$open()
-
+remDr$setTimeout(type = "implicit", milliseconds = 2000)
+remDr$setTimeout(type = "page load", milliseconds = 2000)
 
 #login to site --------------------
 remDr$navigate(itc_login_site)
@@ -47,8 +65,10 @@ logxpath = "//button[contains(text(), 'Login')]"
 logbox = remDr$findElement(using = "xpath", value = logxpath)
 logbox$clickElement()
 
-rm(unbox, pwbox, logxpath, logbox, username, password, pwtable)
-Sys.sleep(3)
+# rm(unbox, pwbox, logxpath, logbox, username, password, pwtable)
+# Sys.sleep(3)
+}
+
 
 #----
 #if acc is locked go to unlock page, else print that acc is unlocked
@@ -113,8 +133,6 @@ Sys.sleep(3)
 # monthly_bttn = remDr$findElement(using = "id", m_bttn)
 # monthly_bttn$clickElement()
 
-
-# 
 # remDr$mouseMoveToLocation(webElement = logg)
 # remDr$click()
 
@@ -125,9 +143,23 @@ Sys.sleep(3)
 # remDr$getCurrentUrl()
 
 
+#link not loading properly workaround ----
+{
+link1 = "https://www.trademap.org/Country_SelCountry_MQ_TS.aspx?nvpm=1%7c%7c%7c%7c%7cTOTAL%7c%7c%7c2%7c1%7c1%7c2%7c2%7c3%7c2%7c1%7c%7c1"
+link2 = "https://www.trademap.org/Country_SelCountry_MQ_TS.aspx?nvpm=1%7c203%7c%7c%7c%7c701090%7c%7c%7c6%7c1%7c1%7c2%7c2%7c3%7c2%7c2%7c1%7c1"
+remDr$navigate(link1)
+remDr$navigate(link2)
+# Sys.sleep(3)
+
+codebox_id = "70109067"
+codebox = remDr$findElement(using = "xpath", "//*/option[@value = '70109067']")
+codebox$clickElement()
+# Sys.sleep(3)
+}
+
 
 #link generator ----
-
+{
 country_code = "203" # 616 Poland
 partner_code = "" #203 Czech Republic
 ntl_code2 = c("70109067")
@@ -136,54 +168,44 @@ exports = 2
 imports = 1
 export_import = c(exports, imports)
 
-code_list = c("10","21","31","41","43",
-              "45","47","51","53","55",
-              "57","61","67","71","79",
-              "91","99"
+code_list = c("10","21"#,"31","41","43"#,
+              # "45","47","51","53","55",
+              # "57","61","67","71","79",
+              # "91","99"
               )
 
-# for (i in code_list){
-#   ntl_code = paste0("701090", i)
-# 
-#   for (i in export_import){
-#     
-#     
-#     
-#     
-#     
-#   }
-# }
-
-
-link = paste0(
-"https://www.trademap.org/Country_SelCountry_MQ_TS.aspx?nvpm=1%7c",
-country_code,
-"%7c%7c",
-partner_code,
-"%7c%7c",
-ntl_code,
-"%7c%7c%7c",
-nchar(ntl_code),
-"%7c1%7c1%7c",
-exports,
-"%7c2%7c3%7c2%7c2%7c1%7c1"
-)
-
-remDr$navigate("https://www.trademap.org/Country_SelCountry_MQ_TS.aspx?nvpm=1%7c%7c%7c%7c%7cTOTAL%7c%7c%7c2%7c1%7c1%7c2%7c2%7c3%7c2%7c1%7c1%7c1")
-Sys.sleep(2)
-remDr$navigate(link)
-
-Sys.sleep(2)
 saveexcel_id = "ctl00_PageContent_GridViewPanelControl_ImageButton_ExportExcel"
-saveexcel = remDr$findElement(using = "id", saveexcel_id)
-saveexcel$clickElement()
 
+for (i2 in code_list){
+  ntl_code = paste0("701090", i2)
 
-
-
-
+  for (i1 in export_import){
+    link = paste0(
+      "https://www.trademap.org/Country_SelCountry_MQ_TS.aspx?nvpm=1%7c",
+      country_code,
+      "%7c%7c",
+      partner_code,
+      "%7c%7c",
+      ntl_code,
+      "%7c%7c%7c",
+      nchar(ntl_code),
+      "%7c1%7c1%7c",
+      i1,
+      "%7c2%7c3%7c2%7c2%7c1%7c1"
+    )
+    
+    remDr$navigate(link)
+    # Sys.sleep(3)
+    
+    saveexcel = remDr$findElement(using = "id", saveexcel_id)
+    saveexcel$clickElement()
+    # Sys.sleep(3)
+  }
+}
+}
 
 #shutdown --------------------
+{
 remDr$close()
 rD$server$stop
 rm(rD, remDr)
@@ -192,3 +214,4 @@ gc()
 system("taskkill /im java.exe /f",
        intern = FALSE,
        ignore.stdout = FALSE)
+}
