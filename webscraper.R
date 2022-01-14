@@ -65,25 +65,34 @@ code_list = c("10","21"#,"31","41","43"#,
               # "91","99"
 )
 
-for (i2 in code_list){
-  ntl_code = paste0("701090", i2)
-  ntl_path = paste0("//*/option[@value = '", ntl_code, "']")
-  
-  codebox = remDr$findElement(using = "xpath", ntl_path)
-  codebox$clickElement()
-  
-  for (i1 in c(1:2)){
-    export_path  = "//*/option[@value = 'E']"
-    import_path  = "//*/option[@value = 'I']"
-    im_ex_path = c(export_path, import_path)
+country_list = c("Czech Republic", "Poland", "United Kingdom")
+
+for (i3 in country_list){
+  country_path = paste0("//*/option[@title = '", i3, "']")
+  country_box = remDr$findElement(using = "xpath", country_path)
+  country_box$clickElement()
+
+  for (i2 in code_list){
+    ntl_code = paste0("701090", i2)
+    ntl_path = paste0("//*/option[@value = '", ntl_code, "']")
     
-    im_ex_box = remDr$findElement(using = "xpath", im_ex_path[i1])
-    im_ex_box$clickElement()
+    code_box = remDr$findElement(using = "xpath", ntl_path)
+    code_box$clickElement()
     
-    saveexcel = remDr$findElement(using = "id", saveexcel_id)
-    saveexcel$clickElement()
+    for (i1 in c(1:2)){
+      export_path  = "//*/option[@value = 'E']"
+      import_path  = "//*/option[@value = 'I']"
+      im_ex_path = c(export_path, import_path)
+      
+      im_ex_box = remDr$findElement(using = "xpath", im_ex_path[i1])
+      im_ex_box$clickElement()
+      
+      saveexcel = remDr$findElement(using = "id", saveexcel_id)
+      saveexcel$clickElement()
+    }
   }
 }
+
 
 # workflow:
 #   change country to e.g. czech republic
@@ -94,6 +103,9 @@ for (i2 in code_list){
 #   download
 #   change product code to YY
 #   etc
+
+df = file.info(list.files(download_path, full.names = TRUE))
+rownames(df)[which.max(df$mtime)]
 
 
 #shutdown --------------------
