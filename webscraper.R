@@ -15,6 +15,10 @@ pwtable = read.csv("input/password.csv", header = FALSE)
 username = as.character(pwtable[1])
 password = as.character(pwtable[2])
 
+if(!dir.exists("download_directory")){
+  dir.create("download_directory")
+}
+
 download_path = paste0(getwd(), "/download_directory") %>% 
   normalizePath()
 
