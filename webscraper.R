@@ -1,3 +1,4 @@
+#packages --------------------
 {
   library(RSelenium)
   library(wdman)
@@ -9,15 +10,24 @@
   stopifnot(find_rtools())
 }
 
-#passwords and locations --------------------
-
-pwtable = read.csv("password.csv", header = FALSE)
+#password and download location --------------------
+pwtable = read.csv("input/password.csv", header = FALSE)
 username = as.character(pwtable[1])
 password = as.character(pwtable[2])
 
 download_path = paste0(getwd(), "/download_directory") %>% 
   normalizePath()
 
+
+#codes and countries --------------------
+code_list = read.csv("input/code_list.csv", header = FALSE)
+code_list = as.vector(t(code_list))
+
+country_list = read.csv("input/country_list.csv", header = FALSE)
+country_list = as.vector(t(country_list))
+
+
+#start browser --------------------
 eCaps = list(chromeOptions = list(
   # args = c('--headless', '--disable-gpu', '--window-size=1280,800'),
   prefs = list("profile.default_content_settings.popups" = 0L,
@@ -36,6 +46,7 @@ remDr = rD$client
 # remDr$setTimeout(type = "implicit", milliseconds = 5000)
 # remDr$setTimeout(type = "page load", milliseconds = 2000)
 
+
 #login to site --------------------
 remDr$navigate("https://google.com")
 itc_login_site = "https://idserv.marketanalysis.intracen.org/Account/Login?ReturnUrl=%2Fconnect%2Fauthorize%2Fcallback%3Fclient_id%3DTradeMap%26scope%3Dopenid%2520email%2520profile%2520offline_access%2520ActivityLog%26redirect_uri%3Dhttps%253A%252F%252Fwww.trademap.org%252FLoginCallback.aspx%26state%3D8e91e1ec50d647ceb649bd87cf09c60c%26response_type%3Dcode%2520id_token%26nonce%3D0c095fc5b9404e1495028c3715432542%26response_mode%3Dform_post"
@@ -52,21 +63,15 @@ logbox = remDr$findElement(using = "xpath", value = logxpath)
 logbox$clickElement()
 
 
-#link not loading properly workaround ----
+#link not loading properly workaround --------------------
 link1 = "https://www.trademap.org/Country_SelCountry_MQ_TS.aspx?nvpm=1%7c%7c%7c%7c%7cTOTAL%7c%7c%7c2%7c1%7c1%7c2%7c2%7c3%7c2%7c1%7c%7c1"
 link2 = "https://www.trademap.org/Country_SelCountry_MQ_TS.aspx?nvpm=1%7c203%7c%7c%7c%7c701090%7c%7c%7c6%7c1%7c1%7c2%7c2%7c3%7c2%7c2%7c1%7c1"
 remDr$navigate(link1)
 remDr$navigate(link2)
 
+
+#download data --------------------
 saveexcel_id = "ctl00_PageContent_GridViewPanelControl_ImageButton_ExportExcel"
-
-code_list = c("10","21"#,"31","41","43"#,
-              # "45","47","51","53","55",
-              # "57","61","67","71","79",
-              # "91","99"
-)
-
-country_list = c("Czech Republic", "Poland", "United Kingdom")
 
 # filename_df = data.frame(row.names = c("new_file", "renamed_file"))
 
@@ -115,7 +120,7 @@ for (i3 in country_list){
   }
 }
 
-
+#rename data --------------------
 filenames_df = file.info(list.files(download_path,
                                     full.names = TRUE,
                                     pattern = "*Trade_Map_-*")
@@ -128,17 +133,6 @@ for (i in rownames(filenames_df)){
     
     file.rename(i, new_filename)
 }
-
-
-# workflow:
-#   change country to e.g. czech republic
-#   change product code to XX
-#   change to export
-#   download
-#   change to import
-#   download
-#   change product code to YY
-#   etc
 
 
 #shutdown --------------------
