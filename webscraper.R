@@ -2,6 +2,7 @@
   library(RSelenium)
   library(wdman)
   library(stringr)
+  library(tools)
   
   library(devtools)
   library(pkgbuild)
@@ -67,6 +68,8 @@ code_list = c("10","21"#,"31","41","43"#,
 
 country_list = c("Czech Republic", "Poland", "United Kingdom")
 
+# filename_df = data.frame(row.names = c("new_file", "renamed_file"))
+
 for (i3 in country_list){
   country_path = paste0("//*/option[@title = '", i3, "']")
   country_box = remDr$findElement(using = "xpath", country_path)
@@ -89,8 +92,41 @@ for (i3 in country_list){
       
       saveexcel = remDr$findElement(using = "id", saveexcel_id)
       saveexcel$clickElement()
+    
+      # file_df = file.info(list.files(download_path, full.names = TRUE))
+      # new_file = rownames(file_df)[which.max(file_df$mtime)]
+      
+      # if (i1 == 1){
+      #   im_ex = "export"
+      # } else {
+      #   im_ex = "import"
+      # }
+      
+      # renamed_file = paste0(download_path, "\\",
+      #                       str_replace_all(i3, " ", "-"),
+      #                       "_", ntl_code,
+      #                       "_", im_ex,
+      #                       ".", file_ext(new_file))
+      # 
+      # new_file_df = data.frame(new_file, renamed_file)
+      # filename_df = rbind(filename_df, new_file_df)
+      # file.rename(new_file, renamed_file)
     }
   }
+}
+
+
+filenames_df = file.info(list.files(download_path,
+                                    full.names = TRUE,
+                                    pattern = "*Trade_Map_-*")
+                         )
+
+for (i in rownames(filenames_df)){
+  new_filename = i %>%
+    str_remove("Trade_Map_-.*product_") %>% 
+    str_remove("_by")
+    
+    file.rename(i, new_filename)
 }
 
 
@@ -103,9 +139,6 @@ for (i3 in country_list){
 #   download
 #   change product code to YY
 #   etc
-
-df = file.info(list.files(download_path, full.names = TRUE))
-rownames(df)[which.max(df$mtime)]
 
 
 #shutdown --------------------
