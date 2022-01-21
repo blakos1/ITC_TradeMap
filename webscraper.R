@@ -8,7 +8,7 @@
   library(devtools)
   library(pkgbuild)
   stopifnot(find_rtools())
-}
+
 
 #password and download location --------------------
 pwtable = read.csv("input/password.csv", header = FALSE)
@@ -66,25 +66,91 @@ logxpath = "//button[contains(text(), 'Login')]"
 logbox = remDr$findElement(using = "xpath", value = logxpath)
 logbox$clickElement()
 
+#locked account check --------------------
+#if acc is locked go to unlock page, else print that acc is unlocked
+lockimg = remDr$findElement(using = "id", "ctl00_MenuControl_Img_Login")
 
-#link not loading properly workaround --------------------
-link1 = "https://www.trademap.org/Country_SelCountry_MQ_TS.aspx?nvpm=1%7c%7c%7c%7c%7cTOTAL%7c%7c%7c2%7c1%7c1%7c2%7c2%7c3%7c2%7c1%7c%7c1"
-link2 = "https://www.trademap.org/Country_SelCountry_MQ_TS.aspx?nvpm=1%7c203%7c%7c%7c%7c701090%7c%7c%7c6%7c1%7c1%7c2%7c2%7c3%7c2%7c2%7c1%7c1"
-remDr$navigate(link1)
-remDr$navigate(link2)
+if(exists("lockimg")){
+  if(lockimg$isElementDisplayed()[[1]] == TRUE){
+    print("Account is locked")
+    lockimg$clickElement()
+    # remDr$navigate("https://www.trademap.org/stCaptcha.aspx")
+    # captchabox = remDr$findElement(using = "class", "div_captchaImg")
+  } else {
+    print("Lock image not found")
+  }
+} else {
+  print("Account is not locked")
+}
+
+
+locktxt = remDr$findElement(using = "id", "ctl00_PageContent_CaptchaAnswer")
+
+if(exists("locktxt")){
+  if(locktxt$isElementDisplayed()[[1]] == TRUE){
+    remDr$screenshot(display = TRUE)
+    validatebttn = remDr$findElement(using = "id", "ctl00_PageContent_ButtonvalidateCaptcha")
+    
+    captcha_text = readline("Solved captcha:")
+    
+    locktxt$sendKeysToElement(list(captcha_text))
+    validatebttn$clickElement()
+  }
+}
+}
+
+#fil out homepage --------------------
+# link1 = "https://www.trademap.org/Country_SelCountry_MQ_TS.aspx?nvpm=1%7c%7c%7c%7c%7cTOTAL%7c%7c%7c2%7c1%7c1%7c2%7c2%7c3%7c2%7c1%7c%7c1"
+# link2 = "https://www.trademap.org/Country_SelCountry_MQ_TS.aspx?nvpm=1%7c203%7c%7c%7c%7c701090%7c%7c%7c6%7c1%7c1%7c2%7c2%7c3%7c2%7c2%7c1%7c1"
+# remDr$navigate(link1)
+# remDr$navigate(link2)
+{
+homepage_link = "https://www.trademap.org/Index.aspx"
+remDr$navigate(homepage_link)
+
+fill_homepage = function(){
+  placeholder = "ctl00_PageContent_RadComboBox_Product_Input"
+  c_path = remDr$findElement(using = "id", placeholder)
+  c_path$sendKeysToElement(list("701090"))
+  c_path$clearElement()
+  c_path$sendKeysToElement(list("701090"))
+  Sys.sleep(2)
+  c_path$sendKeysToElement(list(key = "down_arrow"))
+  c_path$sendKeysToElement(list(key = "enter"))
+  
+  placeholder = "ctl00_PageContent_Button_TimeSeries_M"
+  c_path = remDr$findElement(using = "id", placeholder)
+  c_path$clickElement()
+  
+  Sys.sleep(1)
+  q_path = paste0("//*/option[@value = 'Q']")
+  q_box = remDr$findElement(using = "xpath", q_path)
+  q_box$clickElement()
+}
+
+fill_homepage()
+
+check_url = function(){
+  current_url = remDr$getCurrentUrl()[[1]]
+  if (current_url == homepage_link){
+    fill_homepage()
+  }
+}
 
 
 #download data --------------------
 saveexcel_id = "ctl00_PageContent_GridViewPanelControl_ImageButton_ExportExcel"
 
-# filename_df = data.frame(row.names = c("new_file", "renamed_file"))
-
 for (i3 in country_list){
+  check_url()
+  
   country_path = paste0("//*/option[@title = '", i3, "']")
   country_box = remDr$findElement(using = "xpath", country_path)
   country_box$clickElement()
 
   for (i2 in code_list){
+    check_url()
+    
     ntl_code = paste0("701090", i2)
     ntl_path = paste0("//*/option[@value = '", ntl_code, "']")
     
@@ -92,6 +158,8 @@ for (i3 in country_list){
     code_box$clickElement()
     
     for (i1 in c(1:2)){
+      check_url()
+      
       export_path  = "//*/option[@value = 'E']"
       import_path  = "//*/option[@value = 'I']"
       im_ex_path = c(export_path, import_path)
@@ -101,43 +169,10 @@ for (i3 in country_list){
       
       saveexcel = remDr$findElement(using = "id", saveexcel_id)
       saveexcel$clickElement()
-    
-      # file_df = file.info(list.files(download_path, full.names = TRUE))
-      # new_file = rownames(file_df)[which.max(file_df$mtime)]
-      
-      # if (i1 == 1){
-      #   im_ex = "export"
-      # } else {
-      #   im_ex = "import"
-      # }
-      
-      # renamed_file = paste0(download_path, "\\",
-      #                       str_replace_all(i3, " ", "-"),
-      #                       "_", ntl_code,
-      #                       "_", im_ex,
-      #                       ".", file_ext(new_file))
-      # 
-      # new_file_df = data.frame(new_file, renamed_file)
-      # filename_df = rbind(filename_df, new_file_df)
-      # file.rename(new_file, renamed_file)
     }
   }
 }
-
-#rename data --------------------
-filenames_df = file.info(list.files(download_path,
-                                    full.names = TRUE,
-                                    pattern = "*Trade_Map_-*")
-                         )
-
-for (i in rownames(filenames_df)){
-  new_filename = i %>%
-    str_remove("Trade_Map_-.*product_") %>% 
-    str_remove("_by")
-    
-    file.rename(i, new_filename)
 }
-
 
 #shutdown --------------------
 {
@@ -149,4 +184,21 @@ for (i in rownames(filenames_df)){
   system("taskkill /im java.exe /f",
          intern = FALSE,
          ignore.stdout = FALSE)
+}
+
+
+#rename data --------------------
+{
+filenames_df = file.info(list.files(download_path,
+                                    full.names = TRUE,
+                                    pattern = "*Trade_Map_-*")
+)
+
+for (i in rownames(filenames_df)){
+  new_filename = i %>%
+    str_remove("Trade_Map_-.*product_") %>% 
+    str_remove("_by")
+  
+  file.rename(i, new_filename)
+}
 }

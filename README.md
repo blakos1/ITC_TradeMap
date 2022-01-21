@@ -11,6 +11,7 @@ Code works while using:
 * Windows 10
 * Chrome 97.0.4692.71
 * R version 4.1.0 (2021-05-18)
+* Rtools
 * Java with PATH and JAVA_HOME variables properly set up
 * Chromedriver in PATH
 
