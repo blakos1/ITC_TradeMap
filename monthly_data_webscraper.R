@@ -15,11 +15,11 @@ pwtable = read.csv("input/password.csv", header = FALSE)
 username = as.character(pwtable[1])
 password = as.character(pwtable[2])
 
-if(!dir.exists("download_directory")){
-  dir.create("download_directory")
+if(!dir.exists("montly_data")){
+  dir.create("montly_data")
 }
 
-download_path = paste0(getwd(), "/download_directory") %>% 
+download_path = paste0(getwd(), "/montly_data") %>% 
   normalizePath()
 
 
@@ -148,6 +148,10 @@ for (i3 in country_list){
   country_box = remDr$findElement(using = "xpath", country_path)
   country_box$clickElement()
 
+  # timeperiod_path = paste0("//*/option[@value = '20']")
+  # timeperiod_box = remDr$findElement(using = "xpath", timeperiod_path)
+  # timeperiod_box$clickElement()
+  
   for (i2 in code_list){
     check_url()
     
