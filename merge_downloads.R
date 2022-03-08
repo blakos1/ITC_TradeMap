@@ -6,8 +6,8 @@ library(tidyr)
 library(purrr)
 
 # download_directory
-input_path = paste0(getwd(), "/download_directory/input")
-output_path = paste0(getwd(), "/download_directory/output")
+input_path = paste0(getwd(), "/quarterly_data/input")
+output_path = paste0(getwd(), "/quarterly_data/output")
 
 # function ----
 join_files = function(directory, country, import=c("import","export")){
@@ -18,12 +18,16 @@ join_files = function(directory, country, import=c("import","export")){
 
   output_list = list()
   for (i in filenames){
-    x = readLines(i, encoding = "UTF-8")
-    
+    x = readLines(i, encoding = "UTF-8", warn = FALSE)
+
+    if(any(str_detect(x, pattern = "Information not available"))) next
+        
     x = x %>% 
       str_remove_all(pattern = '<td>Kilograms</td>') %>% 
       str_remove_all(pattern = '<td></td>') %>%  
       str_remove_all(pattern = '<td>Units</td>') %>%  
+      str_remove_all(pattern = '<td>Mixed</td>') %>%  
+      str_remove_all(pattern = '<td title="No quantity has been reported">No Quantity</td>') %>% 
       str_remove_all(pattern = '<th scope="col">Unit</th>') %>% 
       str_replace(pattern = '<td align="center" colspan="2">',
                   replacement = '<td align="center" colspan="1">') %>% 
@@ -95,12 +99,16 @@ for (i in rownames(xls_df)){
 }
 
 # create output file
-country_list = as.list(read.csv("input/country_list.csv", header = FALSE))
+country_list = readLines("input/country_list.csv", encoding = "UTF-8") %>% 
+  str_replace_all(pattern = " ", replacement = "_") %>% 
+  as.list()
 
-for (i in country_list){
+for (i in 1:length(country_list)){
+  country_name = country_list[[i]]
+# country_name = "Estonia"
   outputs = list()
-  outputs[[1]] = join_files(input_path, i, "export")
-  outputs[[2]] = join_files(input_path, i, "import")
+  outputs[[1]] = join_files(input_path, country_name, "export")
+  outputs[[2]] = join_files(input_path, country_name, "import")
   
   merged = merge(outputs[[1]], outputs[[2]],
                  by = c("Product", "Country", "Partner", "Date"),
@@ -116,9 +124,10 @@ for (i in country_list){
   outputs = bind_rows(outputs[[1]], outputs[[2]]) %>% 
     bind_rows(outputs[[3]]) 
   
-  outputs %>% 
-    write.xlsx(file = paste0(output_path,"/", i, "_merged2.xlsx"),
-               sheetName = paste0(i, "_trade"))
+  outputs %>%
+    write.csv(file = paste0(output_path,"/", country_name, "_merged.csv"))
+    # write.xlsx(file = paste0(output_path,"/", country_name, "_merged.xlsx"),
+    #            sheetName = paste0(i, "_trade"), append = TRUE)
   rm(merged, outputs)
 }
 
